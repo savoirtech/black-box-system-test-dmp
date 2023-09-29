@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2023 Savoir Technologies
+  ~
+  ~ Licensed to the Apache Software Foundation (ASF) under one or more
+  ~ contributor license agreements.  See the NOTICE file distributed with
+  ~ this work for additional information regarding copyright ownership.
+  ~ The ASF licenses this file to You under the Apache License, Version 2.0
+  ~ (the "License"); you may not use this file except in compliance with
+  ~ the License.  You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  ~
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.savoirtech</groupId>
+    <artifactId>black-box-systest-dmp-docker-it</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+
+    <packaging>jar</packaging>
+
+    <name>Black Box System Test, Docker-Maven-Plugin (DMP) -- Example Project ::: Docker IT</name>
+    <description>
+        Docker Integration Tests for the project.
+    </description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.savoirtech</groupId>
+            <artifactId>black-box-systest-dmp-main</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- MAVEN DEPENDENCY PLUGIN -->
+            <!-- Be sure to pick up the correct version of the MAIN jar for this build, whether is comes -->
+            <!--  from the same build/reactor, maven cache, or other.                                    -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.2</version>
+                <executions>
+                    <execution>
+                        <id>copy-main-artifact</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skipITs}</skip> <!-- not needed if we are skipping the docker build -->
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.savoirtech</groupId>
+                                    <artifactId>black-box-systest-dmp-main</artifactId>
+                                    <version>${project.version}</version>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+            <!--         -->
+            <!--  DOCKER -->
+            <!--         -->
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <configuration>
+                    <skip>${skipITs}</skip>
+                    <showLogs>true</showLogs>
+                    <autoCreateCustomNetworks>true</autoCreateCustomNetworks>
+                    <images>
+                        <!--                           -->
+                        <!-- TBD999: DEPENDENCY CONTAINER -->
+                        <!--                           -->
+                        <!--<image>-->
+                        <!--    <name>tbd-dependency-image</name>-->
+                        <!--    <alias>tbd</alias>-->
+                        <!--    <build>-->
+                        <!--        <from>opennms/horizon-stream-mock-minion-gateway:local</from>-->
+                        <!--    </build>-->
+                        <!--    <run>-->
+                        <!--        <env>-->
+                        <!--            <JAVA_TOOL_OPTIONS>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005</JAVA_TOOL_OPTIONS>-->
+                        <!--        </env>-->
+                        <!--        <ports>-->
+                        <!--            <port>mock-miniongateway.http.port:8080</port>-->
+                        <!--            <port>mock-miniongateway.grpc.port:8990</port>-->
+                        <!--        </ports>-->
+                        <!--        <wait>-->
+                        <!--            <log>Started MinionGatewayWiremockMain in .* seconds</log>-->
+                        <!--            <time>120000</time>-->
+                        <!--        </wait>-->
+                        <!--        <network>-->
+                        <!--            <mode>custom</mode>-->
+                        <!--            <name>PROJNAME-docker-it-network</name>-->
+                        <!--            <alias>minion-gateway</alias>-->
+                        <!--        </network>-->
+                        <!--    </run>-->
+                        <!--</image>-->
+
+                        <!--                    -->
+                        <!-- APPLICATION IMAGE  -->
+                        <!--                    -->
+                        <image>
+                            <name>projname-application-it-image</name>
+                            <alias>application</alias>
+                            <build>
+                                <from>openjdk:17-alpine</from>
+                                <assembly>
+                                    <targetDir>/</targetDir>
+
+                                    <inline xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                            xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
+                                            xsi:schemaLocation="
+                                                 http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2
+                                                 http://maven.apache.org/xsd/assembly-1.1.2.xsd
+                                             ">
+
+                                        <!-- Copy the dependency (main jar) to /app from the target/dependency folder. -->
+                                        <!--  It was placed there by the maven dependency plugin above                 -->
+                                        <fileSets>
+                                            <fileSet>
+                                                <directory>${project.build.directory}/dependency</directory>
+                                                <outputDirectory>/app</outputDirectory>
+                                            </fileSet>
+                                        </fileSets>
+                                    </inline>
+                                </assembly>
+                                <entryPoint>
+                                    <exec>
+                                        <arg>java</arg>
+                                        <arg>-Dloader.path=/app/config</arg>
+                                        <arg>-jar</arg>
+                                        <arg>
+                                            /app/black-box-systest-dmp-main-${project.version}.jar
+                                        </arg>
+                                    </exec>
+                                </entryPoint>
+                            </build>
+                            <run>
+                                <hostname>test-application</hostname>
+                                <ports>
+                                    <port>application-http-port:8080</port>
+                                    <!--<port>5005:5005</port>-->
+                                </ports>
+                                <env>
+                                    <!-- Need to make sure address=* is in the DEBUG OPTS otherwise it listens on the container's localhost only -->
+                                    <JAVA_OPTS>-Djava.security.egd=file:/dev/./urandom
+                                        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+                                    </JAVA_OPTS>
+                                </env>
+                                <wait>
+                                    <log>Started ProjectMain in .* seconds</log>
+                                    <time>60000</time>
+                                </wait>
+                                <network>
+                                    <mode>custom</mode>
+                                    <name>projname-docker-it-network</name>
+                                    <alias>minion</alias>
+                                </network>
+                            </run>
+                        </image>
+                    </images>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>start-before-integration-test</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>start</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>stop-after-integration-test</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--                -->
+            <!-- TEST EXECUTION -->
+            <!--                -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.0.0-M5</version>
+                <executions>
+                    <execution>
+                        <id>horizon-integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <phase>integration-test</phase>
+                        <configuration>
+                            <excludes>
+                                <exclude>none</exclude>
+                            </excludes>
+                            <includes>
+                                <include>**/*IT.java</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+
+                    <!-- Fail the build on IT Failures.  Executed as a separate step so that post-integration-test -->
+                    <!--  phase executes even after an IT failure.                                                 -->
+                    <execution>
+                        <id>horizon-verify-it</id>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <skipITs>${skipITs}</skipITs>
+                    <reuseForks>true</reuseForks>
+                    <useSystemClassLoader>false</useSystemClassLoader>
+                    <systemProperties>
+                        <property>
+                            <name>TBD</name>
+                            <value>TBD</value>
+                        </property>
+                        <property>
+                            <name>application.base-url</name>
+                            <value>http://localhost:${application-http-port}</value>
+                        </property>
+                    </systemProperties>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
