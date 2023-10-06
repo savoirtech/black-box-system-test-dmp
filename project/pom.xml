@@ -59,8 +59,10 @@
         </plugins>
     </build>
 
+     <!-- tag::parent-modules-decl[] -->
     <modules>
         <module>main</module>
         <module>docker-it</module>
     </modules>
+     <!-- end::parent-modules-decl[] -->
 </project>

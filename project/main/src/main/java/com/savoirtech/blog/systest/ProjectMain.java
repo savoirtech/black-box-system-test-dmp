@@ -27,6 +27,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 /**
  * Main entry point for the application.
  */
+// tag::project-main[]
 @SpringBootApplication
 public class ProjectMain {
 
@@ -34,3 +35,4 @@ public class ProjectMain {
         SpringApplication.run(ProjectMain.class, args);
     }
 }
+// end::project-main[]

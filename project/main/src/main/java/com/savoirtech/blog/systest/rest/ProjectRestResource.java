@@ -25,6 +25,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import org.springframework.stereotype.Component;
 
+// tag::project-rest-resource[]
 @Component
 @Path("/api")
 public class ProjectRestResource {
@@ -35,3 +36,4 @@ public class ProjectRestResource {
         return "Hello";
     }
 }
+// end::project-rest-resource[]

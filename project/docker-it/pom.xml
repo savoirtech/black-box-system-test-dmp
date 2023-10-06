@@ -36,6 +36,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <rest-assured.version>5.3.0</rest-assured.version>
     </properties>
 
     <dependencies>
@@ -44,10 +46,24 @@
             <artifactId>black-box-systest-dmp-main</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>${rest-assured.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <!-- tag::maven-dependency-plugin-copy-main-jar[] -->
             <!-- MAVEN DEPENDENCY PLUGIN -->
             <!-- Be sure to pick up the correct version of the MAIN jar for this build, whether is comes -->
             <!--  from the same build/reactor, maven cache, or other.                                    -->
@@ -75,7 +91,7 @@
                     </execution>
                 </executions>
             </plugin>
-
+            <!-- end::maven-dependency-plugin-copy-main-jar[] -->
 
             <!--         -->
             <!--  DOCKER -->
@@ -83,48 +99,24 @@
             <plugin>
                 <groupId>io.fabric8</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
+                <version>0.43.4</version>
                 <configuration>
                     <skip>${skipITs}</skip>
                     <showLogs>true</showLogs>
                     <autoCreateCustomNetworks>true</autoCreateCustomNetworks>
                     <images>
-                        <!--                           -->
-                        <!-- TBD999: DEPENDENCY CONTAINER -->
-                        <!--                           -->
-                        <!--<image>-->
-                        <!--    <name>tbd-dependency-image</name>-->
-                        <!--    <alias>tbd</alias>-->
-                        <!--    <build>-->
-                        <!--        <from>opennms/horizon-stream-mock-minion-gateway:local</from>-->
-                        <!--    </build>-->
-                        <!--    <run>-->
-                        <!--        <env>-->
-                        <!--            <JAVA_TOOL_OPTIONS>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005</JAVA_TOOL_OPTIONS>-->
-                        <!--        </env>-->
-                        <!--        <ports>-->
-                        <!--            <port>mock-miniongateway.http.port:8080</port>-->
-                        <!--            <port>mock-miniongateway.grpc.port:8990</port>-->
-                        <!--        </ports>-->
-                        <!--        <wait>-->
-                        <!--            <log>Started MinionGatewayWiremockMain in .* seconds</log>-->
-                        <!--            <time>120000</time>-->
-                        <!--        </wait>-->
-                        <!--        <network>-->
-                        <!--            <mode>custom</mode>-->
-                        <!--            <name>PROJNAME-docker-it-network</name>-->
-                        <!--            <alias>minion-gateway</alias>-->
-                        <!--        </network>-->
-                        <!--    </run>-->
-                        <!--</image>-->
-
+                        <!-- tag::application-test-image[] -->
                         <!--                    -->
                         <!-- APPLICATION IMAGE  -->
                         <!--                    -->
                         <image>
                             <name>projname-application-it-image</name>
                             <alias>application</alias>
+                            <!-- tag::application-test-image-build-from[] -->
                             <build>
                                 <from>openjdk:17-alpine</from>
+                            <!-- end::application-test-image-build-from[] -->
+                            <!-- tag::application-test-image-assembly[] -->
                                 <assembly>
                                     <targetDir>/</targetDir>
 
@@ -145,6 +137,8 @@
                                         </fileSets>
                                     </inline>
                                 </assembly>
+                                <!-- end::application-test-image-assembly[] -->
+                                <!-- tag::application-test-image-entrypoint[] -->
                                 <entryPoint>
                                     <exec>
                                         <arg>java</arg>
@@ -155,13 +149,16 @@
                                         </arg>
                                     </exec>
                                 </entryPoint>
+                                <!-- end::application-test-image-entrypoint[] -->
                             </build>
                             <run>
                                 <hostname>test-application</hostname>
+                                <!-- tag::application-test-image-ports[] -->
                                 <ports>
                                     <port>application-http-port:8080</port>
                                     <!--<port>5005:5005</port>-->
                                 </ports>
+                                <!-- end::application-test-image-ports[] -->
                                 <env>
                                     <!-- Need to make sure address=* is in the DEBUG OPTS otherwise it listens on the container's localhost only -->
                                     <JAVA_OPTS>-Djava.security.egd=file:/dev/./urandom
@@ -179,6 +176,7 @@
                                 </network>
                             </run>
                         </image>
+                        <!-- end::application-test-image[] -->
                     </images>
                 </configuration>
                 <executions>
@@ -200,6 +198,7 @@
                 </executions>
             </plugin>
 
+            <!-- tag::failsafe-plugin[] -->
             <!--                -->
             <!-- TEST EXECUTION -->
             <!--                -->
@@ -209,7 +208,7 @@
                 <version>3.0.0-M5</version>
                 <executions>
                     <execution>
-                        <id>horizon-integration-test</id>
+                        <id>projname-integration-test</id>
                         <goals>
                             <goal>integration-test</goal>
                         </goals>
@@ -224,31 +223,34 @@
                         </configuration>
                     </execution>
 
+                    <!-- tag::failsafe-verify[] -->
                     <!-- Fail the build on IT Failures.  Executed as a separate step so that post-integration-test -->
                     <!--  phase executes even after an IT failure.                                                 -->
                     <execution>
-                        <id>horizon-verify-it</id>
+                        <id>projname-verify-it</id>
                         <goals>
                             <goal>verify</goal>
                         </goals>
                     </execution>
+                    <!-- end::failsafe-verify[] -->
                 </executions>
                 <configuration>
+                    <!--suppress MavenModelInspection -->
                     <skipITs>${skipITs}</skipITs>
                     <reuseForks>true</reuseForks>
                     <useSystemClassLoader>false</useSystemClassLoader>
+                    <!-- tag::failsafe-plugin-system-properties[] -->
                     <systemProperties>
                         <property>
-                            <name>TBD</name>
-                            <value>TBD</value>
-                        </property>
-                        <property>
                             <name>application.base-url</name>
+                            <!--suppress MavenModelInspection -->
                             <value>http://localhost:${application-http-port}</value>
                         </property>
                     </systemProperties>
+                    <!-- end::failsafe-plugin-system-properties[] -->
                 </configuration>
             </plugin>
+            <!-- end::failsafe-plugin[] -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

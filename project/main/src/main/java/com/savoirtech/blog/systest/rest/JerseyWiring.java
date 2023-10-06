@@ -25,9 +25,11 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 
+// tag::jersey-wiring[]
 @Configuration
 public class JerseyWiring extends ResourceConfig {
     public JerseyWiring(@Autowired ProjectRestResource projectRestResource) {
         this.registerInstances(projectRestResource);
     }
 }
+// end::jersey-wiring[]
