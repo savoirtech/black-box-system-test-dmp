@@ -2,16 +2,17 @@
 
 ## Overview
 
-The TL;DR below presents the major components and boilerplate for a
-Quick Start.
+Below:
 
-Below that is more depth.
+- TL;DR = Quick Start with major components and boilerplate snippets
 
-Also, see the source code under the project folder for a minimal,
-fully-functional example.
+- After that is more depth.
 
-**NOTE** this project does not include any dependency containers (e.g.
-DB, JMS, etc) for the application.
+- Also, see the source code under the project folder for a minimal,
+  fully-functional example.
+
+**NOTE** this project does not include any containers with System
+dependencies (e.g. DB, JMS, etc) for the application.
 
 ## TL;DR
 
@@ -52,6 +53,8 @@ $ mvn clean install
 
 ### Write the Application
 
+**ProjectMain.java**
+
 ``` java
 @SpringBootApplication
 public class ProjectMain {
@@ -61,6 +64,8 @@ public class ProjectMain {
     }
 }
 ```
+
+**ProjectRestResource.java**
 
 ``` java
 @Component
@@ -75,6 +80,8 @@ public class ProjectRestResource {
 }
 ```
 
+**JerseyWiring.java**
+
 ``` java
 @Configuration
 public class JerseyWiring extends ResourceConfig {
@@ -85,6 +92,12 @@ public class JerseyWiring extends ResourceConfig {
 ```
 
 ### Configure the Containers with the Docker-Maven Plugin
+
+**NOTE** the image is exluded here due to its size and its inclusion
+later in the article; see the project sources, or the detail section
+[Creation of a Test Container for the
+Application](#_creation_of_a_test_container_for_the_application) below,
+for the example image boilerplate.
 
 ``` xml
 <plugin>
@@ -225,7 +238,7 @@ containers include:
 - Fairly direct translation from the plugin config to Dockerfile /
   Docker Compose
 
-**NOTE** One notable disadvantage of the plugin is a lack of cleanup if
+**NOTE** a notable disadvantage of the plugin is a lack of cleanup if
 the Maven build itself is interrupted. See the section below on "Cleanup
 after Interrupted Tests" for more information.
 
@@ -276,19 +289,22 @@ Included in this example project is a web service with a simple endpoint
 that returns a fixed response with the text `Hello` served at the path
 `/api/hi`.
 
-Please see the TL;DR section above for a quick overview of the code, or
-view the full code itself under the project folder. Here are links to
-the full code of the Main module:
+To view the code, please see the TL;DR section above for a quick
+overview, or view the full code itself under the project folder. Here
+are links to the full code of the Main module:
 
-- [pom.xml](https://github.com/savoirtech/black-box-system-test-dmp/project/main/pom.xml)
+- [pom.xml](https://github.com/savoirtech/black-box-system-test-dmp/blob/main/project/pom.xml)
 
-- [ProjectMain.java](https://github.com/savoirtech/black-box-system-test-dmp/project/main/src/main/java/com/savoirtech/blog/systest/ProjectMain.java)
+- [ProjectMain.java](https://github.com/savoirtech/black-box-system-test-dmp/blob/main/project/main/src/main/java/com/savoirtech/blog/systest/ProjectMain.java)
 
-- [ProjectRestResource.java](https://github.com/savoirtech/black-box-system-test-dmp/project/main/src/main/java/com/savoirtech/blog/systest/rest/ProjectRestResource.java)
+- [ProjectRestResource.java](https://github.com/savoirtech/black-box-system-test-dmp/blob/main/project/main/src/main/java/com/savoirtech/blog/systest/rest/ProjectRestResource.java)
 
-- [JerseyWiring.java](https://github.com/savoirtech/black-box-system-test-dmp/project/main/src/main/java/com/savoirtech/blog/systest/rest/JerseyWiring.java)
+- [JerseyWiring.java](https://github.com/savoirtech/black-box-system-test-dmp/blob/main/project/main/src/main/java/com/savoirtech/blog/systest/rest/JerseyWiring.java)
 
 #### Generating the Executable JAR
+
+Below is the section of the `pom.xml` in the Main module that packages
+the JAR file into an "executable jar".
 
 ``` xml
 <plugin>
@@ -326,7 +342,7 @@ Here are the key parts for the System Tests:
 
 - creation of a test container for the application
 
-- instructions to spin and and shut down test containers
+- instructions to spin up and shut down test containers
 
 - test code itself
 
@@ -336,13 +352,13 @@ Please see the TL;DR section above for a quick overview of the code, or
 view the full code itself under the project folder. Here are links to
 the full code of the Main module:
 
-- [pom.xml](https://github.com/savoirtech/black-box-system-test-dmp/project/docker-it/pom.xml)
+- [pom.xml](https://github.com/savoirtech/black-box-system-test-dmp/blob/main/project/docker-it/pom.xml)
 
-- [HelloIT.java](https://github.com/savoirtech/black-box-system-test-dmp/project/docker-it/src/test/java/com/savoirtech/blog/systest/it/HelloIT.java)
+- [HelloIT.java](https://github.com/savoirtech/black-box-system-test-dmp/blob/main/project/docker-it/src/test/java/com/savoirtech/blog/systest/it/HelloIT.java)
 
 ### Creation of a Test Container for the Application
 
-Applications may or may not require a docker container to be included as
+Applications may or may not require a docker container to be created as
 a product of the build. This example excludes a separate image as a
 product of the build, and instead creates a test-specific image only.
 
@@ -366,18 +382,18 @@ version of the project main JAR running in the test.
 Using the maven dependency plugin, we ensure that Maven gives us the
 correct version of the JAR file based on the way the developer runs the
 build. For example, when running a full build from the parent folder,
-maven attaches the main JAR to the build, and the dependency plugin
-picks up that version of the JAR. On the other hand, if the developer
-runs a build from the `docker-it` module folder itself (not using `-pl`
-arguments), then maven will use the version of the main JAR file from
-the developer’s `~/.m2/repository` cache.
+maven builds the main JAR, attaches it to the build, and then the
+dependency plugin picks up that version of the JAR. On the other hand,
+if the developer runs a build from the `docker-it` module folder itself
+(not using `-pl` arguments), then maven will use the version of the main
+JAR file from the developer’s `~/.m2/repository` cache.
 
 There are more combinations and possible outcomes here. There’s even the
 case of testing against a released version of the main JAR file,
-downloaded from Maven Central (or the like). The safe advice for new
-developers is to always run the build from the parent folder while
-developing and testing your local code. Please feel free to discuss
-further on the Github discussion pages for this project.
+downloaded from Maven Central (or other release repository). The safe
+advice for new developers is to always run the full build from the
+parent folder while developing and testing your local code. Please feel
+free to discuss further on the Github discussion pages for this project.
 
 ``` xml
 <!-- MAVEN DEPENDENCY PLUGIN -->
@@ -409,9 +425,9 @@ further on the Github discussion pages for this project.
 </plugin>
 ```
 
-And here we tell the image to add our main project JAR file into the
-image under the directory `/app`, using the dependency extracted by the
-`maven-dependency-plugin`.
+And here we tell the Docker Maven Plugin to add our main project JAR
+file into the docker image under the directory `/app`, using the
+dependency extracted by the `maven-dependency-plugin`.
 
 ``` xml
 <assembly>
@@ -438,13 +454,18 @@ image under the directory `/app`, using the dependency extracted by the
 
 The `<entryPoint>` tag contains the instructions for starting the
 application at container startup time. Note the command is
-`java -Dloader.path=/app/config -jar /app/black-box-systest-dmp-main-${project.version}.jar`
-(where `${project.version}` will be replaced with the actual project
-version).
 
-With the entrypoint defined this way, arguments given to the container
-when it is created will be passed as arguments to the project’s Main JAR
-file.
+``` bash
+java -Dloader.path=/app/config -jar /app/black-box-systest-dmp-main-${project.version}.jar
+```
+
+Note that `${project.version}` will be replaced with the actual project
+version by maven at build time.
+
+On a side note - with the entrypoint defined this way in the docker
+image, arguments given to a container, when created with this image,
+will be passed as arguments to the project’s Main JAR file, and hence
+accessible as command-line arguments in `ProjectMain.java`.
 
 ``` xml
 <entryPoint>
@@ -509,9 +530,9 @@ file.
         </ports>
         <env>
             <!-- Need to make sure address=* is in the DEBUG OPTS otherwise it listens on the container's localhost only -->
-            <JAVA_OPTS>-Djava.security.egd=file:/dev/./urandom
+            <JAVA_TOOL_OPTIONS>-Djava.security.egd=file:/dev/./urandom
                 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
-            </JAVA_OPTS>
+            </JAVA_TOOL_OPTIONS>
         </env>
         <wait>
             <log>Started ProjectMain in .* seconds</log>
@@ -585,7 +606,7 @@ Notice the following line:
 That ties in the dynamically-allocated, ephemeral, port from docker,
 which is significant for minimizing environment-specific failures, such
 as attempting to build on a machine where the developer has other
-applications running.
+applications listening on the same ports.
 
 ``` xml
 <ports>
@@ -596,14 +617,18 @@ applications running.
 
 Notice the left side of the `:` in the port declaration is
 `application-http-port`, which informs the docker-maven-plugin to
-dynamically allocate a host port and then populate that port number in
-the Maven property of the same name. The number on the right side of the
-`:` is the containers internal port number - 8080 in this case, the port
-number on which our application is listening for web requests.
+dynamically allocate a host port and then populate a Maven property of
+the same name with that port number for its value. The number on the
+right side of the `:` is the container’s internal port number - 8080 in
+this case, the port number on which our application is listening for web
+requests.
 
 The commented-out `5005:5005` port mapping is a convenience to simplify
 the effort needed to debug the application while it is running inside
-the container.
+the container. Uncommenting this line grants access to the applications
+debug port inside the container from the host port 5005. Note that the
+image is also created with `JAVA_TOOL_OPTIONS` configured with debugging
+enabled for the application.
 
 #### Handling Errors in the Test
 
@@ -632,9 +657,7 @@ failures).
 
 Imagine this - you’re running the integration tests and notice a
 failure, or remember that you forgot to finish that one thing that will
-make it all fail, and perhaps take a long time for the tests to complete
-when you know failure is imminent, and that seeing the output isn’t
-necessary.
+make it all fail. So you decide not to wait for the tests to complete.
 
 So you hit Ctrl-C and stop the process during the integration-test
 phase. Here’s what you are left with:
@@ -647,7 +670,7 @@ phase. Here’s what you are left with:
 
 - Temporary volumes created by the plugin remain
 
-Here are docker instructions to help with cleanup:
+Here are docker instructions that you can use to help with cleanup:
 
 ``` bash
 $ docker ps
@@ -670,7 +693,7 @@ $ mvn -f project clean install
 ## Author’s Notes
 
 - Initially, the plan was to include 1 external system dependency - such
-  as a DB or JMS solution - but due to the length of the article, it was
+  as a DB or JMS system - but due to the length of the article, it was
   removed.
 
 - JAX-RS was used in this example
@@ -699,7 +722,7 @@ $ mvn -f project clean install
 
   - The `install` target is ideal in most cases because it makes sure
     that working with a subset of the build - such as running maven out
-    of a sub-module’s folder - gets the developer the expected, latest
+    of a sub-module’s folder - gives the developer the expected, latest
     version of built in-project dependencies.
 
   - Feel free to use different targets as they suit your needs - just be
