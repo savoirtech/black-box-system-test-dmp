@@ -96,7 +96,7 @@ public class JerseyWiring extends ResourceConfig {
 **NOTE** the image is exluded here due to its size and its inclusion
 later in the article; see the project sources, or the detail section
 [Creation of a Test Container for the
-Application](#_creation_of_a_test_container_for_the_application) below,
+Application](#creation-of-a-test-container-for-the-application) below,
 for the example image boilerplate.
 
 ``` xml

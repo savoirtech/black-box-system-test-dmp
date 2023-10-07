@@ -66,7 +66,9 @@ include::project/main/src/main/java/com/savoirtech/blog/systest/rest/JerseyWirin
 
 *NOTE* the image is exluded here due to its size and its inclusion later in the article;
 see the project sources,
-or the detail section <<Creation of a Test Container for the Application>> below,
+or the detail section
+<<creation-of-a-test-container-for-the-application,Creation of a Test Container for the Application>>
+below,
 for the example image boilerplate.
 
 [,xml,linenums]
@@ -251,6 +253,7 @@ Here are links to the full code of the Main module:
 * link:https://github.com/savoirtech/black-box-system-test-dmp/blob/main/project/docker-it/src/test/java/com/savoirtech/blog/systest/it/HelloIT.java[HelloIT.java]
 
 
+[#creation-of-a-test-container-for-the-application]
 ==== Creation of a Test Container for the Application
 
 Applications may or may not require a docker container to be created as a product of the build.
